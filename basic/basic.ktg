@@ -42,4 +42,4 @@ print add5 10
 
 ; String ops
 print uppercase "hello"
-print join "hello" " world"
+print rejoin ["hello" " world"]
