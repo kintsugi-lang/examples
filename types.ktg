@@ -26,17 +26,23 @@ print is? score! "N/A"             ; true
 print is? score! -5                ; false
 print is? score! 200               ; false
 
-; --- Enum-like subsets ---
-mood!: @type/where [lit-word!] [
-  match it [
-    ['happy] [true]
-    ['calm]  [true]
-    ['angry] [true]
-    default  [false]
-  ]
-]
+; --- Enums via @type/enum ---
+; `@type/enum` declares an enum over lit-words. Beyond the membership
+; predicate, it exposes two more affordances:
+;   mood/happy   - the member's lit-word value (typos error)
+;   mood/happy!  - a singleton type matching only 'happy
+
+mood!: @type/enum ['happy | 'calm | 'angry]
+
 print is? mood! 'happy             ; true
 print is? mood! 'banana            ; false
+
+; Namespace access + typo safety
+print mood/happy                   ; 'happy
+
+; Singleton types narrow function params to a specific case
+be-happy: function [m [mood/happy!]] [m]
+print be-happy 'happy              ; 'happy
 
 ; --- Type names are first-class ---
 ; They're values you can bind, pass, compare.
