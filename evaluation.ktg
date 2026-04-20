@@ -1,0 +1,41 @@
+; Kintsugi evaluates left-to-right.  No operator precedence.
+; This is the single evaluation rule for the whole language.
+
+print 1 + 2 * 3                    ; 9  -- (1 + 2) * 3
+print 1 + 2 + 3                    ; 6
+
+; Parens force grouping where needed.
+print 1 + (2 * 3)                  ; 7
+
+; --- Four word kinds distinguish roles ---
+;   word         look up and evaluate: print, add
+;   word:        set-word - bind the next value
+;   :word        get-word - fetch without invoking
+;   'word        lit-word - symbol literal
+;   @word        meta-word - dialect hooks
+
+; Set-word binds.
+x: 42
+print x                            ; 42
+
+; Get-word fetches the function value itself, does not call.
+double: function [n] [n * 2]
+f: :double
+print f 21                         ; 42
+
+; Lit-word is an inert symbol.
+tag: 'pending
+print tag                          ; 'pending
+print tag = 'pending               ; true
+
+; --- Paths traverse nested structure ---
+point: context [x: 10  y: 20]
+print point/x                      ; 10
+point/x: 99
+print point/x                      ; 99
+
+; --- No statement terminator ---
+; Whitespace and newlines are interchangeable.  Expressions
+; are delimited by arity, not by punctuation.
+a: 1  b: 2  c: 3
+print a + b + c                    ; 6

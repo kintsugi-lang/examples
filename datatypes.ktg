@@ -1,0 +1,50 @@
+; Every value in Kintsugi has a type ending in `!`.
+; Values are dynamic; types are queried via `<t>?` predicates
+; or `is? <type!> <value>`.
+
+; --- Scalars ---
+print 42                           ; integer!
+print 3.14                         ; float!
+print "hello"                      ; string!
+print true                         ; logic!
+print none                         ; none!
+
+; --- Compound scalars ---
+print 100x200                      ; pair!
+print 1.2.3                        ; tuple!
+print $19.99                       ; money!  cent-exact, no drift
+print 2026-04-20                   ; date!
+print 14:30:00                     ; time!
+
+; --- Series ---
+probe [1 2 3]                      ; block!  inert list
+probe "abc"                        ; string is also a series
+
+; --- Type predicates ---
+print integer? 42                  ; true
+print integer? 3.14                ; false
+print block?   [1 2 3]             ; true
+print none?    none                ; true
+
+; --- is? for symbolic type checks ---
+print is? integer! 42              ; true
+print is? string!  42              ; false
+
+; --- Money isolated from floats ---
+; No silent coercion.  Cent-exact arithmetic.
+price: $19.99
+tax:   price * 0.08
+total: price + tax
+print total                        ; $21.59
+
+; --- Pair arithmetic ---
+p: 100x200
+print p + 50x25                    ; 150x225
+print p * 2                        ; 200x400
+
+; --- Blocks are data, not code ---
+; A block is inert until you evaluate it.  `reduce` turns a
+; block of expressions into a block of their results.
+code: [1 + 2   3 * 4]
+probe code                         ; [1 + 2 3 * 4]
+probe reduce code                  ; [3 12]

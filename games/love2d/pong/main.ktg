@@ -1,9 +1,6 @@
-Kintsugi [
-  name: 'pong
-  version: 1.0.0
-]
+Kintsugi []
 
-; Pong in Kintsugi — a LOVE2D game using objects, make, and merge.
+; Pong for LOVE2D.
 ; Compile: kintsugi -c main.ktg -o main.lua
 ; Run:     love .
 
@@ -13,66 +10,56 @@ Kintsugi [
 
 bindings [
   lg "love.graphics" 'alias
-  le "love.event" 'alias
-  lw "love.window" 'alias
+  le "love.event"    'alias
+  lw "love.window"   'alias
   lk "love.keyboard" 'alias
-  le/quit "love.event.quit" 'call 0
-  lw/setTitle     "love.window.setTitle"          'call 1
-  lw/setMode      "love.window.setMode"           'call 2
-  lk/isDown     "love.keyboard.isDown"          'call 1
-  lg/setColor   "love.graphics.setColor"        'call 4
-  lg/rectangle  "love.graphics.rectangle"       'call 5
-  lg/circle     "love.graphics.circle"          'call 4
-  lg/print      "love.graphics.print"           'call 3
-  lg/setFont    "love.graphics.setFont"         'call 1
-  lg/newFont    "love.graphics.newFont"         'call 1
-  love/load                "love.load"                     'assign
-  love/update              "love.update"                   'assign
-  love/draw                "love.draw"                     'assign
-  love/keypressed          "love.keypressed"               'assign
+
+  le/quit       "love.event.quit"          'call 0
+  lw/setTitle   "love.window.setTitle"     'call 1
+  lw/setMode    "love.window.setMode"      'call 2
+  lk/isDown     "love.keyboard.isDown"     'call 1
+  lg/setColor   "love.graphics.setColor"   'call 4
+  lg/rectangle  "love.graphics.rectangle"  'call 5
+  lg/circle     "love.graphics.circle"     'call 4
+  lg/print      "love.graphics.print"      'call 3
+  lg/setFont    "love.graphics.setFont"    'call 1
+  lg/newFont    "love.graphics.newFont"    'call 1
+
+  love/load         "love.load"        'assign
+  love/update       "love.update"      'assign
+  love/draw         "love.draw"        'assign
+  love/keypressed   "love.keypressed"  'assign
 ]
 
 ; ============================================================
 ; Constants
 ; ============================================================
 
-SCREEN-W: 800
-SCREEN-H: 600
-PADDLE-W: 12
-PADDLE-H: 80
+SCREEN-W:     800
+SCREEN-H:     600
+PADDLE-W:     12
+PADDLE-H:     80
 PADDLE-SPEED: 400
-BALL-SIZE: 8
-BALL-SPEED: 300
+BALL-SIZE:    8
+BALL-SPEED:   300
 
 ; ============================================================
 ; Types
 ; ============================================================
 
 Paddle: object [
-  fields [
-    optional [
-      pos [pair!] 0x0
-      score [integer!] 0
-      speed [integer!] PADDLE-SPEED
-    ]
-  ]
+  field/optional [pos   [pair!]    0x0]
+  field/optional [score [integer!] 0]
+  field/optional [speed [integer!] PADDLE-SPEED]
 ]
 
 Ball: object [
-  fields [
-    optional [
-      pos [pair!] 0x0
-      vel [pair!] 1x1        ; direction; magnitude comes from speed
-      speed [integer!] BALL-SPEED
-    ]
-  ]
+  field/optional [pos   [pair!]    0x0]
+  field/optional [vel   [pair!]    1x1]
+  field/optional [speed [integer!] BALL-SPEED]
 ]
 
-game: context [
-  paused: true
-  font: none
-]
-
+game:   context [paused: true  font: none]
 player: make Paddle [pos: 20x260]
 cpu:    make Paddle [pos: 768x260]
 ball:   make Ball   [pos: 396x296]
@@ -82,7 +69,7 @@ ball:   make Ball   [pos: 396x296]
 ; ============================================================
 
 reset-ball: function [] [
-  ball/pos: 396x296
+  ball/pos:   396x296
   ball/vel/x: either ball/vel/x > 0 [-1] [1]
   ball/vel/y: either (random/int 2) = 1 [1] [-1]
   ball/speed: BALL-SPEED
@@ -101,10 +88,10 @@ love/load: function [] [
 
 love/keypressed: function [key] [
   match key [
-    ["space"] [game/paused: not game/paused]
+    ["space"]  [game/paused: not game/paused]
     ["r"] [
       player/score: 0
-      cpu/score: 0
+      cpu/score:    0
       reset-ball
     ]
     ["escape"] [le/quit]
@@ -113,7 +100,6 @@ love/keypressed: function [key] [
 
 love/update: function [dt] [
   unless game/paused [
-
     ; --- Player movement ---
     if lk/isDown "w" [
       player/pos/y: player/pos/y - (player/speed * dt)
@@ -121,10 +107,10 @@ love/update: function [dt] [
     if lk/isDown "s" [
       player/pos/y: player/pos/y + (player/speed * dt)
     ]
-
-    ; Clamp player
     if player/pos/y < 0 [player/pos/y: 0]
-    if player/pos/y > (SCREEN-H - PADDLE-H) [player/pos/y: SCREEN-H - PADDLE-H]
+    if player/pos/y > (SCREEN-H - PADDLE-H) [
+      player/pos/y: SCREEN-H - PADDLE-H
+    ]
 
     ; --- CPU AI: follow ball ---
     cpu-center: cpu/pos/y + (PADDLE-H / 2)
@@ -135,7 +121,9 @@ love/update: function [dt] [
       cpu/pos/y: cpu/pos/y - (cpu/speed * dt * 0.7)
     ]
     if cpu/pos/y < 0 [cpu/pos/y: 0]
-    if cpu/pos/y > (SCREEN-H - PADDLE-H) [cpu/pos/y: SCREEN-H - PADDLE-H]
+    if cpu/pos/y > (SCREEN-H - PADDLE-H) [
+      cpu/pos/y: SCREEN-H - PADDLE-H
+    ]
 
     ; --- Ball movement ---
     ball/pos: ball/pos + (ball/vel * ball/speed * dt)
@@ -193,8 +181,10 @@ love/draw: function [] [
 
   ; Paddles
   lg/setColor 0.9 0.9 1 1
-  lg/rectangle "fill" player/pos/x player/pos/y PADDLE-W PADDLE-H
-  lg/rectangle "fill" cpu/pos/x cpu/pos/y PADDLE-W PADDLE-H
+  lg/rectangle
+    "fill" player/pos/x player/pos/y PADDLE-W PADDLE-H
+  lg/rectangle
+    "fill" cpu/pos/x cpu/pos/y PADDLE-W PADDLE-H
 
   ; Ball
   lg/setColor 1 0.8 0.2 1
@@ -204,11 +194,13 @@ love/draw: function [] [
   lg/setFont game/font
   lg/setColor 1 1 1 1
   lg/print to string! player/score 340 20
-  lg/print to string! cpu/score 440 20
+  lg/print to string! cpu/score    440 20
 
   ; Instructions
   if game/paused [
     lg/setColor 1 1 1 0.6
-    lg/print "SPACE to start  |  W/S to move  |  R to reset" 200 560
+    lg/print
+      "SPACE to start  |  W/S to move  |  R to reset"
+      200 560
   ]
 ]

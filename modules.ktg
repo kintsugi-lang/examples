@@ -1,0 +1,48 @@
+; Kintsugi has two primitives for bringing in code:
+;   import   -- cached module loading, value-returning
+;   load     -- raw file reading, no caching
+
+; --- Stdlib as context ---
+import 'math
+print math/clamp 15 0 10           ; 10
+print math/lerp  0 100 0.5         ; 50.0
+
+; --- /using splices selected exports as bare words ---
+import/using 'math [clamp lerp]
+print clamp 42 0 10                ; 10
+print lerp  0 100 0.25             ; 25.0
+
+; --- Bulk import ---
+import ['collections]
+probe collections/range 1 5        ; [1 2 3 4 5]
+
+; --- Local files ---
+; A local import returns a context! keyed by absolute path.
+; Same consumer, same cached value.  `/fresh` bypasses cache.
+;
+;   sprites: import %lib/sprites.ktg
+;   sprites/draw player
+;
+;   fresh-sprites: import/fresh %lib/sprites.ktg
+
+; --- Module file shape ---
+;
+;   Kintsugi []                  ; header -> entrypoint
+;
+;   exports [add clamp]          ; only these are public
+;
+;   add: function [a b] [a + b]
+;   clamp: function [v lo hi] [...]
+;   helper: function [x] [x * x] ; private (not in exports)
+;
+; `exports` is a body-level call, not a header field.  If
+; never called, everything is public.
+
+; --- load: raw reader ---
+;
+;   load %file              -- parse, return block! (AST)
+;   load/eval %file         -- evaluate, return context!
+;   load/header %file       -- return just the Kintsugi header
+;   load/freeze %file       -- evaluate, return frozen object!
+;
+; load never caches.  Every call reparses the file.

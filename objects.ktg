@@ -1,0 +1,60 @@
+; `object` declares a frozen template.  `make` stamps a
+; mutable instance (context!) from the template.  Methods
+; access the instance through `self`.
+
+; --- Minimal shape ---
+Counter: object [
+  field/optional [n [integer!] 0]
+
+  increment: does [self/n: self/n + 1]
+  value:     does [self/n]
+]
+
+c: make Counter []
+c/increment
+c/increment
+print c/value                      ; 2
+
+; --- Required + optional fields ---
+Person: object [
+  field/required [name [string!]]
+  field/required [age  [integer!]]
+  field/optional [tag  [string!] "friend"]
+
+  greet: does [
+    rejoin ["Hi, I'm " self/name " (" self/tag ")"]
+  ]
+]
+
+p: make Person [name: "Kai" age: 30]
+print p/greet                      ; Hi, I'm Kai (friend)
+
+; --- Clone an instance ---
+; `make` on an instance copies fields, applies overrides.
+p2: make p [age: 25  tag: "rival"]
+print p2/name                      ; Kai
+print p2/age                       ; 25
+print p2/tag                       ; rival
+print p/age                        ; 30
+
+; --- Methods with params ---
+Account: object [
+  field/required [owner   [string!]]
+  field/optional [balance [money!]  $0.00]
+
+  deposit: function [amount [money!]] [
+    self/balance: self/balance + amount
+  ]
+  summary: does [
+    rejoin [self/owner ": " self/balance]
+  ]
+]
+
+a: make Account [owner: "Kai"]
+a/deposit $50.00
+a/deposit $12.34
+print a/summary                    ; Kai: $62.34
+
+; --- Objects are frozen; instances are not ---
+; Mutating Counter directly would raise 'frozen'.
+; Mutating `c` works -- instances are plain contexts.

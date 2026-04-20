@@ -1,0 +1,45 @@
+; Beyond the built-in types, you can declare subset types
+; with `@type/where` -- a base type plus a guard predicate.
+; `it` is the value under test.
+
+positive!: @type/where [integer!] [it > 0]
+
+print is? positive!  42            ; true
+print is? positive!  -5            ; false
+
+; Types enforce at function boundaries.
+clamp: function [
+  n [positive!] return: [positive!]
+] [n]
+print clamp 42                     ; 42
+
+; --- Unions with per-branch guards ---
+score!: @type/where [integer! | string!] [
+  match it [
+    [integer!] [(it >= 0) and (it <= 100)]
+    [string!]  [it = "N/A"]
+    default    [false]
+  ]
+]
+print is? score! 85                ; true
+print is? score! "N/A"             ; true
+print is? score! -5                ; false
+print is? score! 200               ; false
+
+; --- Enum-like subsets ---
+mood!: @type/where [lit-word!] [
+  match it [
+    ['happy] [true]
+    ['calm]  [true]
+    ['angry] [true]
+    default  [false]
+  ]
+]
+print is? mood! 'happy             ; true
+print is? mood! 'banana            ; false
+
+; --- Type names are first-class ---
+; They're values you can bind, pass, compare.
+t: positive!
+print is? t 7                      ; true
+print is? t -7                     ; false

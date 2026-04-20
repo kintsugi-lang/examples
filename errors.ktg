@@ -1,0 +1,59 @@
+; `attempt` is a pipeline dialect for composing steps that
+; can fail.  Each step threads the previous result through
+; `it`.  Errors short-circuit to a matching `catch` arm.
+
+; --- source + then pipeline ---
+result: attempt [
+  source ["  Hello, World  "]
+  then   [trim it]
+  then   [lowercase it]
+  then   [split it ", "]
+]
+probe result                       ; ["hello" "world"]
+
+; --- without source, attempt is a reusable function ---
+clean: attempt [
+  when [not empty? it]
+  then [trim it]
+  then [lowercase it]
+]
+print clean "  HEY  "              ; hey
+
+; --- catch by error kind ---
+recover: attempt [
+  source [error 'parse "bad input"]
+  catch 'parse [
+    rejoin ["recovered: " error]
+  ]
+  fallback ["unknown failure"]
+]
+print recover                      ; recovered: bad input
+
+; --- fallback for anything uncaught ---
+loud-parse: attempt [
+  source [error 'other "boom"]
+  catch 'parse ["parse error"]
+  fallback ["generic failure"]
+]
+print loud-parse                   ; generic failure
+
+; --- retries ---
+; Counter closure simulates a flaky operation that fails
+; twice then succeeds.
+attempts: 0
+flaky: does [
+  attempts: attempts + 1
+  either attempts < 3 [
+    error 'network "try again"
+  ] [
+    "success"
+  ]
+]
+
+out: attempt [
+  source [flaky]
+  retries 3
+  catch 'network ["gave up"]
+]
+print out                          ; success
+print attempts                     ; 3

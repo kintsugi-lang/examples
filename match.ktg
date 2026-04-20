@@ -1,0 +1,57 @@
+; `match` dispatches on a value by pattern.  Each arm is
+; `[pattern] [body]`; the first matching arm wins.  Patterns
+; can capture names, check types, destructure blocks, and
+; guard with `when`.
+
+; --- Literal matching ---
+classify: function [n [integer!]] [
+  match n [
+    [0]          ["zero"]
+    [1]          ["one"]
+    default      ["other"]
+  ]
+]
+print classify 0                   ; zero
+print classify 1                   ; one
+print classify 42                  ; other
+
+; --- Captures + guards ---
+grade: function [n [integer!]] [
+  match n [
+    [x] when [x >= 90]  ["A"]
+    [x] when [x >= 80]  ["B"]
+    [x] when [x >= 70]  ["C"]
+    default             ["F"]
+  ]
+]
+print grade 95                     ; A
+print grade 72                     ; C
+print grade 50                     ; F
+
+; --- Type dispatch ---
+describe: function [v] [
+  match v [
+    [integer!]  [rejoin ["int " v]]
+    [string!]   [rejoin ["str " v]]
+    [block!]    [rejoin ["blk length " length v]]
+    default     ["?"]
+  ]
+]
+print describe 7                   ; int 7
+print describe "hi"                ; str hi
+print describe [1 2 3]             ; blk length 3
+
+; --- Destructuring blocks ---
+; Lit-words match literally; bare names capture.
+shape: function [s] [
+  match s [
+    ['circle r]           [rejoin ["circle r=" r]]
+    ['rect w h] when [w = h]
+                          [rejoin ["square " w]]
+    ['rect w h]           [rejoin ["rect " w "x" h]]
+    default               ["unknown"]
+  ]
+]
+print shape ['circle 5]            ; circle r=5
+print shape ['rect 4 4]            ; square 4
+print shape ['rect 3 7]            ; rect 3x7

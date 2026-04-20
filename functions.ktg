@@ -1,0 +1,56 @@
+; Functions are first-class values.  Kintsugi uses positional
+; args (no default positionals) and optional refinements.
+
+; --- Basic shape ---
+; function [spec] [body]
+; spec: a block of param names, optional per-param [type!],
+; and an optional `return: [type!]`.
+square: function [n [integer!]] [n * n]
+print square 7                     ; 49
+
+; Multi-arg, typed.
+clamp: function [
+  v  [integer!]
+  lo [integer!]
+  hi [integer!]
+  return: [integer!]
+] [
+  if v < lo [return lo]
+  if v > hi [return hi]
+  v
+]
+print clamp 15 0 10                ; 10
+print clamp -5 0 10                ; 0
+
+; --- does -- zero-arg function sugar ---
+; Equivalent to `function [] [...]`.
+now-ish: does [time-of-day]
+
+; --- Refinements -- optional flags inside the spec ---
+; `/name` marks a boolean flag.  Following `word [type!]`
+; slots become that refinement's typed params.
+greet: function [who [string!] /shout /prefix tag [string!]] [
+  msg: rejoin ["Hi, " who]
+  if prefix [msg: rejoin [tag msg]]
+  if shout  [msg: uppercase msg]
+  msg
+]
+print greet              "kai"             ; Hi, kai
+print greet/shout        "kai"             ; HI, KAI
+print greet/prefix       "kai" "[!] "      ; [!] Hi, kai
+print greet/shout/prefix "kai" "[!] "      ; [!] HI, KAI
+
+; --- Closures capture the defining scope ---
+make-adder: function [n] [
+  function [x] [x + n]
+]
+add5:   make-adder 5
+add100: make-adder 100
+print add5 10                      ; 15
+print add100 10                    ; 110
+
+; --- Recursion ---
+fact: function [n [integer!] return: [integer!]] [
+  either n <= 1 [1] [n * fact (n - 1)]
+]
+print fact 10                      ; 3628800

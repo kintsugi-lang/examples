@@ -1,0 +1,80 @@
+Kintsugi [target: 'interpreter]
+
+; Three metaprogramming tools:
+;   @compose     - block template with paren interpolation
+;   @template    - declarative macros, expanded at call sites
+;   @preprocess  - imperative compile-time code generation
+;
+; This file runs in the interpreter because bare @compose at
+; runtime is interpret-only.  Declare `target: 'interpreter`
+; in the header so `kintsugi -c` refuses to compile it.
+
+; ============================================================
+; @compose -- block templates
+; ============================================================
+; Parens inside a @compose block are evaluated and spliced.
+
+greeting: "hello"
+who:      "world"
+code: @compose/deep [print rejoin [(greeting) " " (who)]]
+probe code                         ; [print rejoin [hello   world]]
+
+; /only prevents block splicing -- inserts as a single value.
+items: [a b c]
+probe @compose      [before (items) after]
+; [before a b c after]
+probe @compose/only [before (items) after]
+; [before [a b c] after]
+
+; /deep recurses into nested blocks.
+x: 42
+probe @compose/deep [outer [inner (x)]]
+; [outer [inner 42]]
+
+; ============================================================
+; @template -- code generation without ceremony
+; ============================================================
+; A @template body is auto-wrapped in @compose, so paren
+; interpolation splices args at the call site.
+
+@template unless: [cond body [block!]] [
+  if not (cond) (body)
+]
+unless (1 > 10) [print "math works"]
+
+; /only when the body contains set-words or raw names that
+; should be preserved literally.
+@template/only defn: [name [string!] params [block!] body [block!]] [
+  (to set-word! name) function (params) (body)
+]
+defn "square" [n] [n * n]
+print square 7                     ; 49
+
+; ============================================================
+; @preprocess -- compile-time codegen
+; ============================================================
+; @preprocess evaluates its body at parse time.  Inside,
+; `emit [...]` injects code into the output program.
+
+; Generate a family of functions from a data list.
+@preprocess [
+  loop [
+    for [op] in [double triple quadruple] do [
+      n: match op [
+        ['double]    [2]
+        ['triple]    [3]
+        ['quadruple] [4]
+      ]
+      emit @compose/deep [
+        (to set-word! op) function [x] [x * (n)]
+      ]
+    ]
+  ]
+]
+print double 5                     ; 10
+print triple 5                     ; 15
+print quadruple 5                  ; 20
+
+; @inline injects a single value at parse time.
+max-enemies: @inline [4 * 4]
+print max-enemies                  ; 16

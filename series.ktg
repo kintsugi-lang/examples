@@ -1,0 +1,45 @@
+; A series is an ordered sequence.  Blocks and strings are
+; both series and share a common API.
+
+items: [10 20 30 40]
+
+; --- Indexed access (1-based) ---
+print first  items                 ; 10
+print last   items                 ; 40
+print second items                 ; 20
+print pick   items 3               ; 30
+
+; --- Length and emptiness ---
+print length items                 ; 4
+print empty? []                    ; true
+print empty? items                 ; false
+
+; --- Find -- returns 1-based index, or none ---
+print find items 30                ; 3
+print find items 99                ; none
+
+; --- Mutation (append / insert) ---
+queue: []
+append queue 1
+append queue 2
+append queue 3
+probe queue                        ; [1 2 3]
+
+; `append/only` inserts the argument as a single element.
+nested: []
+append/only nested [inner]
+probe nested                       ; [[inner]]
+
+; --- Reverse, sort ---
+probe reverse copy items           ; ['date 'cherry 'banana 'apple]
+probe sort [3 1 4 1 5 9 2 6]       ; [1 1 2 3 4 5 6 9]
+
+; --- rejoin: concatenate to string ---
+print rejoin ["Hello, " "world"]   ; Hello, world
+print rejoin [1 " + " 2 " = " 3]   ; 1 + 2 = 3
+
+; --- Strings are series too ---
+s: "hello"
+print first  s                     ; h
+print length s                     ; 5
+print find   s "ll"                ; ll

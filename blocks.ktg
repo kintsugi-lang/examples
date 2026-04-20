@@ -1,0 +1,44 @@
+; Kintsugi is homoiconic.  Code is data in the same shape
+; you would write it: a block of values.  `[...]` is inert
+; until you evaluate it.  That makes source transformation
+; as cheap as list manipulation.
+
+; --- A block is just a value ---
+code: [print "hello"]
+probe code                         ; [print "hello"]
+
+; --- `reduce` evaluates each expression in a block ---
+probe reduce [1 + 2   3 * 4]       ; [3 12]
+
+; --- `capture` extracts keyword-shaped records ---
+; The schema `@name [T1 T2 ...]` is an N-slot shape;
+; each match is a block of N typed slots.
+raw: [
+  student "Alice" [90 85 92]
+  student "Bob"   [78 82 88]
+]
+records: capture raw [
+  @student [string! block!]
+]
+probe records/student
+; [["Alice" [90 85 92]] ["Bob" [78 82 88]]]
+
+; --- `@compose` splices parens into a block template ---
+; This is the block form of an f-string -- but the result
+; is a block (structure), not a string.  Any (paren) is
+; evaluated and its value takes the slot.
+greeting: "hello"
+who:      "world"
+msg: @compose/deep [print rejoin [(greeting) " " (who)]]
+probe msg                          ; [print rejoin [hello   world]]
+
+; --- `@template` turns composition into a call site ---
+@template unless: [cond body [block!]] [
+  if not (cond) (body)
+]
+unless (1 > 10) [print "math still works"]
+
+; --- Same structure, different role ---
+; One shape - the block - is the AST, the literal data,
+; and the macro target.  No parser, no quasiquote, no
+; special forms separate these roles.

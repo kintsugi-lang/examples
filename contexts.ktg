@@ -1,0 +1,59 @@
+; context! is Kintsugi's record type.  A context holds named
+; bindings (fields) and exists as a mutable value.  Functions
+; close over contexts; objects stamp them; modules expose them.
+
+; --- Making a context directly ---
+point: context [
+  x: 10
+  y: 20
+]
+print point/x                      ; 10
+print point/y                      ; 20
+
+; Mutate through a path.
+point/x: 99
+print point/x                      ; 99
+
+; --- Contexts as records ---
+; Each field can be any value, including functions.
+counter: context [
+  n: 0
+  bump: does [self/n: self/n + 1]
+  show: does [print self/n]
+]
+counter/bump
+counter/bump
+counter/bump
+counter/show                       ; 3
+
+; --- Nested contexts ---
+ship: context [
+  pos: 0x0
+  hull: context [hp: 100  armor: 25]
+]
+print ship/hull/hp                 ; 100
+ship/hull/hp: 80
+print ship/hull/hp                 ; 80
+
+; --- scope -- block-scoped bindings ---
+; Names defined inside scope do not leak.
+result: scope [
+  a: 10
+  b: 32
+  a + b
+]
+print result                       ; 42
+; `a` and `b` are not visible here.
+
+; --- Closures capture enclosing contexts ---
+make-counter: function [start [integer!]] [
+  n: start
+  context [
+    bump: does [n: n + 1  n]
+    peek: does [n]
+  ]
+]
+c: make-counter 10
+print c/bump                       ; 11
+print c/bump                       ; 12
+print c/peek                       ; 12
