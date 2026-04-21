@@ -54,7 +54,7 @@ print square 7                     ; 49
 ; @preprocess -- compile-time codegen
 ; ============================================================
 ; @preprocess evaluates its body at parse time.  Inside,
-; `emit [...]` injects code into the output program.
+; `@emit [...]` injects code into the output program.
 
 ; Generate a family of functions from a data list.
 @preprocess [
@@ -65,7 +65,7 @@ print square 7                     ; 49
         ['triple]    [3]
         ['quadruple] [4]
       ]
-      emit @compose/deep [
+      @emit [
         (to set-word! op) function [x] [x * (n)]
       ]
     ]
@@ -76,5 +76,5 @@ print triple 5                     ; 15
 print quadruple 5                  ; 20
 
 ; @preprocess with emit injects values at parse time.
-@preprocess [emit [max-enemies: 16]]
+@preprocess [@emit [max-enemies: 16]]
 print max-enemies                  ; 16
