@@ -1,0 +1,56 @@
+Kintsugi [target: 'playdate]
+
+; 4-way square movement for Playdate.
+; Compile: kintsugi -c main.ktg -o main.lua
+; Build:   pdc . move.pdx
+; Run:     PlaydateSimulator move.pdx
+;
+; Use the D-pad to move the square. Crank is ignored.
+
+bindings [
+  gfx "playdate.graphics" 'alias
+  pd  "playdate"          'alias
+
+  gfx/clear               "playdate.graphics.clear"                'call 1
+  gfx/fillRect            "playdate.graphics.fillRect"             'call 4
+  gfx/setColor            "playdate.graphics.setColor"             'call 1
+  pd/buttonIsPressed      "playdate.buttonIsPressed"               'call 1
+
+  pd/update               "playdate.update"                        'assign
+
+  ; Button constants exposed by the SDK.
+  btn-up    "playdate.kButtonUp"    'const
+  btn-down  "playdate.kButtonDown"  'const
+  btn-left  "playdate.kButtonLeft"  'const
+  btn-right "playdate.kButtonRight" 'const
+
+  ; Color constants.
+  color-black "playdate.graphics.kColorBlack" 'const
+  color-white "playdate.graphics.kColorWhite" 'const
+]
+
+SCREEN-W: 400
+SCREEN-H: 240
+SIZE:     20
+SPEED:    4  ; pixels per frame at 30fps
+
+player: context [pos: 190x110]
+
+pd/update: function [] [
+  ; Movement
+  if pd/buttonIsPressed btn-up    [player/pos/y: player/pos/y - SPEED]
+  if pd/buttonIsPressed btn-down  [player/pos/y: player/pos/y + SPEED]
+  if pd/buttonIsPressed btn-left  [player/pos/x: player/pos/x - SPEED]
+  if pd/buttonIsPressed btn-right [player/pos/x: player/pos/x + SPEED]
+
+  ; Clamp to screen
+  if player/pos/x < 0 [player/pos/x: 0]
+  if player/pos/y < 0 [player/pos/y: 0]
+  if player/pos/x > (SCREEN-W - SIZE) [player/pos/x: SCREEN-W - SIZE]
+  if player/pos/y > (SCREEN-H - SIZE) [player/pos/y: SCREEN-H - SIZE]
+
+  ; Draw
+  gfx/clear color-white
+  gfx/setColor color-black
+  gfx/fillRect player/pos/x player/pos/y SIZE SIZE
+]

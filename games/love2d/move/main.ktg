@@ -1,0 +1,62 @@
+Kintsugi []
+
+; 4-way square movement for LOVE2D.
+; Compile: kintsugi -c main.ktg -o main.lua
+; Run:     love .
+;
+; Use W/A/S/D or arrow keys to move the square.
+
+bindings [
+  lg "love.graphics" 'alias
+  le "love.event"    'alias
+  lw "love.window"   'alias
+  lk "love.keyboard" 'alias
+
+  le/quit       "love.event.quit"          'call 0
+  lw/setTitle   "love.window.setTitle"     'call 1
+  lw/setMode    "love.window.setMode"      'call 2
+  lk/isDown     "love.keyboard.isDown"     'call 1
+  lg/setColor   "love.graphics.setColor"   'call 4
+  lg/rectangle  "love.graphics.rectangle"  'call 5
+  lg/clear      "love.graphics.clear"      'call 4
+
+  love/load         "love.load"        'assign
+  love/update       "love.update"      'assign
+  love/draw         "love.draw"        'assign
+  love/keypressed   "love.keypressed"  'assign
+]
+
+SCREEN-W: 640
+SCREEN-H: 480
+SIZE:     32
+SPEED:    200
+
+player: context [pos: 304x224]
+
+love/load: function [] [
+  lw/setMode SCREEN-W SCREEN-H
+  lw/setTitle "Kintsugi 4-way move"
+]
+
+love/keypressed: function [key] [
+  if key = "escape" [le/quit]
+]
+
+love/update: function [dt] [
+  step: SPEED * dt
+  if any? [lk/isDown "w"  lk/isDown "up"   ] [player/pos/y: player/pos/y - step]
+  if any? [lk/isDown "s"  lk/isDown "down" ] [player/pos/y: player/pos/y + step]
+  if any? [lk/isDown "a"  lk/isDown "left" ] [player/pos/x: player/pos/x - step]
+  if any? [lk/isDown "d"  lk/isDown "right"] [player/pos/x: player/pos/x + step]
+
+  if player/pos/x < 0 [player/pos/x: 0]
+  if player/pos/y < 0 [player/pos/y: 0]
+  if player/pos/x > (SCREEN-W - SIZE) [player/pos/x: SCREEN-W - SIZE]
+  if player/pos/y > (SCREEN-H - SIZE) [player/pos/y: SCREEN-H - SIZE]
+]
+
+love/draw: function [] [
+  lg/clear 0.1 0.1 0.12 1
+  lg/setColor 0.95 0.75 0.3 1
+  lg/rectangle "fill" player/pos/x player/pos/y SIZE SIZE
+]
