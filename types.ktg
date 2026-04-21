@@ -1,51 +1,110 @@
-; Beyond the built-in types, you can declare subset types
-; with `@type/where` -- a base type plus a guard predicate.
-; `it` is the value under test.
+Kintsugi [target: 'lua]
+
+; ============================================================
+; Custom Types in Kintsugi
+; ============================================================
+;
+; Kintsugi ships four meta-words for declaring custom types:
+;
+;   @type         -- a union/rule type with no extra guard
+;   @type/where   -- a base type plus a validation expression
+;   @type/enum    -- a finite set of lit-words with namespace access
+;   @type/guard   -- a user function callable from @type/where bodies
+;
+; Custom types are enforced at function boundaries (param + return
+; annotations) in the interpreter and compile to synthesized
+; predicate functions in the Lua prelude, emitted only when the
+; program actually dispatches on them (`is? T x`, `match ... [[T]...]`).
+
+; ============================================================
+; @type -- union and rule types
+; ============================================================
+; No extra guard. The rule is a block of existing types, optionally
+; joined with `|` for a union. Values satisfy the type when they
+; match any branch.
+
+nullable-int!: @type [integer! | none!]
+
+print is? nullable-int! 42         ; true
+print is? nullable-int! none       ; true
+print is? nullable-int! "42"       ; false
+
+; ============================================================
+; @type/where -- base + guard predicate
+; ============================================================
+; A base type plus a guard expression. `it` is the value under test.
 
 positive!: @type/where [integer!] [it > 0]
 
-print is? positive!  42            ; true
-print is? positive!  -5            ; false
+print is? positive! 42             ; true
+print is? positive! -5             ; false
 
-; Types enforce at function boundaries.
-clamp: function [
-  n [positive!] return: [positive!]
-] [n]
-print clamp 42                     ; 42
+; Annotations enforce at function call sites:
+double: function [n [positive!] return: [positive!]] [n * 2]
+print double 21                    ; 42
 
-; --- Unions with per-branch guards ---
-score!: @type/where [integer! | string!] [
-  match it [
-    [integer!] [(it >= 0) and (it <= 100)]
-    [string!]  [it = "N/A"]
-    default    [false]
-  ]
+; ============================================================
+; @type/guard -- user predicates callable inside @type/where
+; ============================================================
+; A plain `function` that happens to return logic! cannot appear
+; inside a where-guard body by default — the compiler doesn't
+; know it's compileable. Declare it with @type/guard and the
+; compiler verifies the body is made of compileable calls only,
+; so the predicate works in both the interpreter and compiled Lua.
+
+even?: @type/guard [n] [(n % 2) = 0]
+
+even-positive!: @type/where [integer!] [
+  (even? it) and (it > 0)
 ]
-print is? score! 85                ; true
-print is? score! "N/A"             ; true
-print is? score! -5                ; false
-print is? score! 200               ; false
 
-; --- Enums via @type/enum ---
-; `@type/enum` declares an enum over lit-words. Beyond the membership
-; predicate, it exposes two more affordances:
-;   mood/happy   - the member's lit-word value (typos error)
-;   mood/happy!  - a singleton type matching only 'happy
+print is? even-positive! 4         ; true
+print is? even-positive! 3         ; false
+print is? even-positive! -2        ; false
+
+; Guards compose: one @type can reference another's predicate.
+non-empty-string?: @type/guard [s] [(length s) > 0]
+
+label!: @type/where [string!] [non-empty-string? it]
+
+print is? label! "hi"              ; true
+print is? label! ""                ; false
+
+; ============================================================
+; @type/enum -- finite lit-word sets
+; ============================================================
+; An enum declares a closed membership. Beyond the type predicate,
+; it exposes two affordances on the type name:
+;   mood/happy    - path access to the lit-word value (typos error)
+;   mood/happy!   - a singleton type matching ONLY that member
 
 mood!: @type/enum ['happy | 'calm | 'angry]
 
 print is? mood! 'happy             ; true
 print is? mood! 'banana            ; false
 
-; Namespace access + typo safety
+; Namespace access -- compiler-checked, typos caught at compile time.
 print mood/happy                   ; 'happy
 
-; Singleton types narrow function params to a specific case
+; Singleton types narrow a function param to one specific member.
 be-happy: function [m [mood/happy!]] [m]
 print be-happy 'happy              ; 'happy
 
-; --- Type names are first-class ---
-; They're values you can bind, pass, compare.
-t: positive!
-print is? t 7                      ; true
-print is? t -7                     ; false
+; ============================================================
+; Dispatch via `match`
+; ============================================================
+; Custom types work as patterns in `match` alongside built-in types.
+
+describe: function [v] [
+  match v [
+    [positive!]  [rejoin ["positive: " v]]
+    [mood!]      [rejoin ["mood: " v]]
+    [none!]      ["empty"]
+    default      ["unknown"]
+  ]
+]
+
+print describe 7                   ; positive: 7
+print describe 'calm               ; mood: 'calm
+print describe none                ; empty
+print describe "x"                 ; unknown
