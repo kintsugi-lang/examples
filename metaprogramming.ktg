@@ -75,6 +75,6 @@ print double 5                     ; 10
 print triple 5                     ; 15
 print quadruple 5                  ; 20
 
-; @inline injects a single value at parse time.
-max-enemies: @inline [4 * 4]
+; @preprocess with emit injects values at parse time.
+@preprocess [emit [max-enemies: 16]]
 print max-enemies                  ; 16
