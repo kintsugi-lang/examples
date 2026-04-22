@@ -1,4 +1,4 @@
-; `object` declares a frozen template.  `make` stamps a
+; `object` declares a named template.  `make` stamps a
 ; mutable instance (context!) from the template.  Methods
 ; access the instance through `self`.
 
@@ -55,6 +55,6 @@ a/deposit $50.00
 a/deposit $12.34
 print a/summary                    ; Kai: $62.34
 
-; --- Objects are frozen; instances are not ---
-; Mutating Counter directly would raise 'frozen'.
+; --- Templates are not mutable; instances are ---
+; Mutating Counter directly would raise 'mutation'.
 ; Mutating `c` works -- instances are plain contexts.

@@ -43,6 +43,5 @@ probe collections/range 1 5        ; [1 2 3 4 5]
 ;   load %file              -- parse, return block! (AST)
 ;   load/eval %file         -- evaluate, return context!
 ;   load/header %file       -- return just the Kintsugi header
-;   load/freeze %file       -- evaluate, return frozen object!
 ;
 ; load never caches.  Every call reparses the file.
