@@ -1,0 +1,51 @@
+; The color stdlib module gives you 0..1-float RGBA blocks, which is
+; the shape LOVE2D setColor wants and a good neutral baseline for any
+; Lua-side graphics API.
+;
+; Use /using to flatten the names you need; path-form calls on stdlib
+; modules don't route correctly today.
+
+import/using 'color [rgb rgba hex hsl lighten darken mix apply]
+
+; --- Constructors ---
+
+red:    rgb 255 0 0                    ; [1.0 0.0 0.0 1.0]
+teal:   hex "#2ec4b6"                  ; parse hex string
+ghost:  rgba 255 255 255 128           ; half-alpha white
+lemon:  hsl 50 95 60                   ; hue/saturation/lightness
+
+probe red
+probe teal
+probe ghost
+probe lemon
+
+; --- Color math ---
+
+probe lighten red 0.4                  ; mix toward white
+probe darken teal 0.5                  ; scale channels down
+probe mix red teal 0.5                 ; linear blend
+
+; --- Palette as a plain context ---
+; Everything in here is available as palette/accent, palette/bg, etc.
+
+palette: context [
+  bg:     hex "#1a1a2e"
+  fg:     hex "#e0e0ef"
+  accent: hex "#f2bf4d"
+  danger: rgb 220 50 50
+]
+
+probe palette/accent
+
+; --- Apply: splice a color into a 4-arity callable ---
+; Handy for LOVE2D's lg/setColor or any `fn r g b a` API:
+;
+;   bindings [lg/setColor "love.graphics.setColor" 'call 4]
+;   apply :lg/setColor palette/accent
+;
+; Stub that prints the channels for the non-graphical example:
+
+print-channels: function [r g b a] [
+  print rejoin ["r=" r " g=" g " b=" b " a=" a]
+]
+apply :print-channels palette/accent
